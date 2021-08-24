@@ -57,21 +57,23 @@ int main(int argc, char **argv)
     ros::NodeHandle nh("~");
 
 
-    std::string serverName,userName,password,serverPort,serialPort;
-    nh.param<std::string>("server",serverName, "rtk.ntrip.qxwz.com");
-    nh.param<std::string>("port",serverPort, "8002");
-    nh.param<std::string>("username",userName, "user");
-    nh.param<std::string>("password",password, "password");
-    nh.param<std::string>("serialPort",serialPort, "");
+    std::string serverName, serverPort, mountpoint, userName, password, initialGPGGA, serialPort;
+    nh.param<std::string>("server",        serverName,   "unk_server");
+    nh.param<std::string>("port",          serverPort,   "unk_port");
+    nh.param<std::string>("mountpoint",    mountpoint,   "unk_mountpt");
+    nh.param<std::string>("username",      userName,     "unk_user");
+    nh.param<std::string>("password",      password,     "unk_pw");
+    nh.param<std::string>("initial_GPGGA", initialGPGGA, "unk_GGA");
+    nh.param<std::string>("serialPort",    serialPort,   "");
 
 
     struct Args args;
-    args.server = serverName.c_str();
-    args.port = "8002";
-    args.user = userName.c_str();
+    args.server =   serverName.c_str();
+    args.port =     serverPort.c_str();
+    args.data =     mountpoint.c_str();
+    args.user =     userName.c_str();
     args.password = password.c_str();
-    args.nmea = "$GNGGA,034458.00,2810.79928,N,11256.54467,E,2,12,0.64,36.0,M,-12.7,M,1.0,0773*7D";
-    args.data = "RTCM32_GGB";
+    args.nmea =     initialGPGGA.c_str();
     args.bitrate = 0;
     args.proxyhost = 0;
     args.proxyport = "2101";
@@ -82,7 +84,7 @@ int main(int argc, char **argv)
     args.parity = SPAPARITY_NONE;
     args.stopbits = SPASTOPBITS_1;
     args.databits = SPADATABITS_8;
-    args.baud = SPABAUD_115200;
+    args.baud = SPABAUD_9600;
     if( serialPort.empty())
         args.serdevice = 0;//"/dev/ttyUSB0";  
     else
@@ -91,8 +93,8 @@ int main(int argc, char **argv)
     args.stop = false;
 
     
-    ROS_INFO("Username= %s",args.user); 
-    ROS_INFO("password= %s",args.password); 
+    ROS_INFO("Username = %s",args.user); 
+    ROS_INFO("password = %s",args.password); 
 
     const std::string topic = "dgps";
     ros::Publisher pub = nh.advertise<sensor_msgs::NavSatFix>(topic,10);
@@ -102,7 +104,7 @@ int main(int argc, char **argv)
     ros::Rate loop_rate(10);
     while (ros::ok())
     {
-        Location loc = getGNGGA();
+        /*Location loc = getGNGGA();
         if( loc.lat.empty() )
         {
         }
@@ -113,7 +115,7 @@ int main(int argc, char **argv)
             fillSatMessage(sat,loc);
             pub.publish(sat);
             ROS_INFO("Talker_____:GPS:x = %s",loc.nmea.c_str()); 
-        }
+        }*/
         ros::spinOnce();
         loop_rate.sleep();
     }

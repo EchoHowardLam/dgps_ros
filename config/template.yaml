@@ -1,0 +1,6 @@
+server:        ''
+port:          ''
+mountpoint:    ''
+username:      ''
+password:      ''
+initial_GPGGA: ''

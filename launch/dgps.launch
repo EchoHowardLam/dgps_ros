@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
     <node pkg="dgps_ros" type="dgps_ros_node" name="dgps" output="screen">
-        <param name="username"  value="user"/>
-        <param name="password"  value="password"/>
-        <param name="serialPort" value="/dev/ttyUSB0"/>
+        <rosparam command="load"    file="$(find dgps_ros)/config/server_config.yaml" />
+        <param name="serialPort"    value="/dev/ttyUSB1"/> <!-- /dev/ttyUSB0 -->
     </node>
 </launch>

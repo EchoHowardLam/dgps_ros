@@ -84,29 +84,18 @@ void appendNMEA(char* buf, int i)
 
 
 
-#ifdef WINDOWSVERSION
-  #include <winsock.h>
-  typedef SOCKET sockettype;
-  typedef u_long in_addr_t;
-  typedef size_t socklen_t;
-  void myperror(char *s)
-  {
-    fprintf(stderr, "%s: %d\n", s, WSAGetLastError());
-  }
-#else
-  typedef int sockettype;
-  #include <signal.h>
-  #include <fcntl.h>
-  #include <unistd.h>
-  #include <arpa/inet.h>
-  #include <sys/socket.h>
-  #include <netinet/in.h>
-  #include <netdb.h>
+typedef int sockettype;
+#include <signal.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
 
-  #define closesocket(sock)       close(sock)
-  #define ALARMTIME   (2*60)
-  #define myperror perror
-#endif
+#define closesocket(sock)       close(sock)
+#define ALARMTIME   (2*60)
+#define myperror perror
 
 #ifndef COMPILEDATE
 #define COMPILEDATE " built " __DATE__
@@ -156,7 +145,6 @@ static struct option opts[] = {
 #define ARGOPT "-d:m:bhp:r:s:u:n:S:R:M:IP:D:B:T:C:Y:A:l:"
 
 int stop = 0;
-#ifndef WINDOWSVERSION
 int sigstop = 0;
 #ifdef __GNUC__
 static __attribute__ ((noreturn)) void sighandler_alarm(
@@ -182,7 +170,6 @@ static void sighandler_alarm(int sig)
   alarm(2);
   stop = 1;
 }
-#endif /* WINDOWSVERSION */
 
 static const char *encodeurl(const char *req)
 {
@@ -650,20 +637,14 @@ void ntrip_client(Args* const args )
       long i;
       if(sleeptime)
       {
-#ifdef WINDOWSVERSION
-        Sleep(sleeptime*1000);
-#else
         sleep(sleeptime);
-#endif
         sleeptime += 2;
       }
       else
       {
         sleeptime = 1;
       }
-#ifndef WINDOWSVERSION
       alarm(ALARMTIME);
-#endif
       if(args->proxyhost)
       {
         int p;
@@ -963,9 +944,7 @@ void ntrip_client(Args* const args )
                       continue;
                     }
                     i = recv(sockfd, rtpbuf, sizeof(rtpbuf), 0);
-#ifndef WINDOWSVERSION
                     alarm(ALARMTIME);
-#endif
                     if(i >= 12 && (unsigned char)rtpbuf[0] == (2 << 6)
                     && rtpbuf[1] >= 96 && rtpbuf[1] <= 98)
                     {
@@ -1256,14 +1235,8 @@ void ntrip_client(Args* const args )
                     int ts = 0, sn = 0;
                     time_t init = 0;
                     struct sockaddr_in addrRTP;
-#ifdef WINDOWSVERSION
-                    u_long blockmode = 1;
-                    if(ioctlsocket(sockudp, FIONBIO, &blockmode)
-                    || ioctlsocket(sockfd, FIONBIO, &blockmode))
-#else /* WINDOWSVERSION */
                     if(fcntl(sockfd, F_SETFL, O_NONBLOCK) < 0
                     || fcntl(sockudp, F_SETFL, O_NONBLOCK) < 0)
-#endif /* WINDOWSVERSION */
                     {
                       fprintf(stderr, "Could not set nonblocking mode\n");
                       error = 1;
@@ -1299,9 +1272,7 @@ void ntrip_client(Args* const args )
                       }
                       i = recvfrom(sockudp, rtpbuffer, sizeof(rtpbuffer), 0,
                       (struct sockaddr*) &addrRTP, &len);
-#ifndef WINDOWSVERSION
                       alarm(ALARMTIME);
-#endif
                       if(i >= 12+1 && (unsigned char)rtpbuffer[0] == (2 << 6) && rtpbuffer[1] == 0x60)
                       {
                         int u,v,w;
@@ -1359,11 +1330,7 @@ void ntrip_client(Args* const args )
                       /* ignore RTSP server replies */
                       if((r=recv(sockfd, buf, MAXDATASIZE-1, 0)) < 0)
                       {
-#ifdef WINDOWSVERSION
-                        if(WSAGetLastError() != WSAEWOULDBLOCK)
-#else /* WINDOWSVERSION */
                         if(errno != EAGAIN)
-#endif /* WINDOWSVERSION */
                         {
                           fprintf(stderr, "Control connection closed\n");
                           error = 1;
@@ -1507,9 +1474,7 @@ void ntrip_client(Args* const args )
               while(!args->stop && !error &&
               (numbytes=recv(sockfd, buf, MAXDATASIZE-1, 0)) > 0)
               {
-#ifndef WINDOWSVERSION
                 alarm(ALARMTIME);
-#endif
                 if(!k)
                 {
                   buf[numbytes] = 0; /* latest end mark for strstr */
@@ -1740,9 +1705,7 @@ void ntrip_client(Args* const args )
               sleeptime = 0;
               while(!args->stop && (numbytes=recv(sockfd, buf, MAXDATASIZE-1, 0)) > 0)
               {
-  #ifndef WINDOWSVERSION
                 alarm(ALARMTIME);
-  #endif
                 fwrite(buf, (size_t)numbytes, 1, stdout);
               }
             }
